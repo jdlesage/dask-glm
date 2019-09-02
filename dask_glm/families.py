@@ -26,14 +26,14 @@ class Logistic(object):
     @staticmethod
     def pointwise_loss(beta, X, y):
         """Logistic Loss, evaluated point-wise."""
-        beta, y = beta.ravel(), y.ravel()
+        y = y.ravel()
         Xbeta = X.dot(beta)
         return Logistic.loglike(Xbeta, y)
 
     @staticmethod
     def pointwise_gradient(beta, X, y):
         """Logistic gradient, evaluated point-wise."""
-        beta, y = beta.ravel(), y.ravel()
+        y = y.ravel()
         Xbeta = X.dot(beta)
         return Logistic.gradient(Xbeta, X, y)
 

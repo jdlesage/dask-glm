@@ -327,6 +327,7 @@ def lbfgs(X, y, regularizer=None, lamduh=1.0, max_iter=100, tol=1e-4,
     -------
     beta : array-like, shape (n_features,)
     """
+    dask_distributed_client = kwargs.pop("dask_distributed_client")
     pointwise_loss = family.pointwise_loss
     pointwise_gradient = family.pointwise_gradient
     if regularizer is not None:
@@ -338,8 +339,10 @@ def lbfgs(X, y, regularizer=None, lamduh=1.0, max_iter=100, tol=1e-4,
     beta0 = np.zeros(p)
 
     def compute_loss_grad(beta, X, y):
-        loss_fn = pointwise_loss(beta, X, y)
-        gradient_fn = pointwise_gradient(beta, X, y)
+        scatter_beta = da.from_delayed(dask_distributed_client.scatter(
+            beta), shape=beta.shape, dtype=beta.dtype)
+        loss_fn = pointwise_loss(scatter_beta, X, y)
+        gradient_fn = pointwise_gradient(scatter_beta, X, y)
         loss, gradient = compute(loss_fn, gradient_fn)
         return loss, gradient.copy()
 
