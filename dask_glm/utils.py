@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import inspect
 import sys
 
+import dask
 import dask.array as da
 import numpy as np
 from functools import wraps
@@ -202,3 +203,14 @@ def scatter_array(arr, dask_client):
     """
     future_arr = dask_client.scatter(arr)
     return da.from_delayed(future_arr, shape=arr.shape, dtype=arr.dtype)
+
+
+def get_dask_client():
+    """
+    Get current dask client
+    """
+    scheduler = dask.base.get_scheduler()
+    if "Client" in type(getattr(scheduler, "__self__", None)).__name__:
+        return scheduler
+    else:
+        return None
