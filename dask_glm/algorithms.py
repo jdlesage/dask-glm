@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 import dask
 from dask import delayed, persist, compute
+from dask.distributed import get_client
 import functools
 import numpy as np
 import dask.array as da
@@ -304,8 +305,7 @@ def local_update(X, y, beta, z, u, rho, f, fprime, solver=fmin_l_bfgs_b):
 
 @normalize
 def lbfgs(X, y, regularizer=None, lamduh=1.0, max_iter=100, tol=1e-4,
-          family=Logistic, verbose=False, dask_distributed_client=None,
-          **kwargs):
+          family=Logistic, verbose=False, **kwargs):
     """L-BFGS solver using scipy.optimize implementation
 
     Parameters
@@ -323,13 +323,12 @@ def lbfgs(X, y, regularizer=None, lamduh=1.0, max_iter=100, tol=1e-4,
     family : Family
     verbose : bool, default False
         whether to print diagnostic information during convergence
-    dask_distributed_client: dask client, default None
-        If given, use it to broadcast model weights to workers.
 
     Returns
     -------
     beta : array-like, shape (n_features,)
     """
+    distributed_dask_client = get_client()
     pointwise_loss = family.pointwise_loss
     pointwise_gradient = family.pointwise_gradient
     if regularizer is not None:
@@ -342,7 +341,7 @@ def lbfgs(X, y, regularizer=None, lamduh=1.0, max_iter=100, tol=1e-4,
 
     def compute_loss_grad(beta, X, y):
         scatter_beta = scatter_array(
-            beta, dask_distributed_client) if dask_distributed_client else beta
+            beta, distributed_dask_client) if distributed_dask_client else beta
         loss_fn = pointwise_loss(beta, X, y)
         gradient_fn = pointwise_gradient(beta, X, y)
         loss, gradient = compute(loss_fn, gradient_fn)
