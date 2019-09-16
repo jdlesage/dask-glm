@@ -201,8 +201,8 @@ def scatter_array(arr, dask_client):
     """Scatter a large numpy array into workers
     Return the equivalent dask array
     """
-    future_arr = dask_client.scatter(arr)
-    return da.from_delayed(future_arr, shape=arr.shape, dtype=arr.dtype)
+    future_arr = dask_client.submit(lambda: np.array(arr), actors=True)
+    return future_arr.result()
 
 
 def get_distributed_client():
